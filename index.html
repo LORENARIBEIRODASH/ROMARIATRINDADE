@@ -231,11 +231,11 @@
       apontam para a planilha que você enviou).
    ============================================================ */
 
-const SHEET_ID = "1pI7U7P6UzPsEYIPLZNaUY4-w8HZHNFOoj78JNJIB194";
+const PUBLISHED_ID = "2PACX-1vR4Exntql9B-4MObISpIzVjh60s3rrudiw06wEO8DUi1TdoVb45H6ZbQwz-iSGjgT7tk83AD1qEPv8W";
 const GID = "0"; // id da aba (gid) — troque se os dados estiverem em outra aba
 
-// Esta URL só funciona se a planilha estiver publicada na web (passo acima).
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+// URL gerada a partir do link de publicação (Arquivo > Compartilhar > Publicar na Web).
+const CSV_URL = `https://docs.google.com/spreadsheets/d/e/${PUBLISHED_ID}/pub?output=csv&gid=${GID}`;
 
 // Colunas (0-indexed): A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9
 const COL_VENCIMENTO = 3; // coluna D
