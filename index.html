@@ -312,6 +312,39 @@
   .status-pill.trabalhando{ background:rgba(46,204,113,0.2); color:var(--good); }
   .status-pill.outro{ background:rgba(255,255,255,0.1); color:var(--text-soft); }
 
+  .prefixo-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:14px;
+  }
+  .prefixo-card{
+    background:linear-gradient(145deg,#000c4d,#000730);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:16px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .prefixo-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(59,107,255,0.3);
+    border-color:var(--blue-accent);
+  }
+  .prefixo-card .pf-nome{
+    font-size:13px;
+    color:var(--text-soft);
+    font-weight:700;
+    letter-spacing:0.5px;
+    word-break:break-word;
+  }
+  .prefixo-card .pf-qtd{
+    font-size:30px;
+    font-weight:800;
+    color:var(--blue-accent);
+    margin-top:6px;
+  }
+
   /* ===== Card vertical para WhatsApp (fora da tela, só usado na captura) ===== */
   #whatsapp-card{
     position:fixed;
@@ -446,6 +479,13 @@
 </div>
 
 <div id="error" class="error-box" style="display:none;"></div>
+
+<section id="prefixo-section" style="display:none;">
+  <h2>Atribuído por Prefixo</h2>
+  <div class="panel">
+    <div class="prefixo-grid" id="prefixo-grid"></div>
+  </div>
+</section>
 
 <section>
   <h2>Apoio</h2>
@@ -596,6 +636,7 @@ function processData(rows){
   let total = 0;
   let atribuida = 0, preparacao = 0, deslocando = 0, trabalhando = 0;
   const vencimentoMap = {};
+  const prefixoMap = {};
   const listaCompleta = [];
 
   rows.forEach(row => {
@@ -610,10 +651,16 @@ function processData(rows){
 
     const status = normalize(row[COL_STATUS]);
     const venc = (row[COL_VENCIMENTO] || "").toString().trim();
+    const prefixo = (row[7] || "").toString().trim(); // coluna H
 
     total += 1;
 
-    if(status.includes("ATRIBUID"))      atribuida   += 1;
+    if(status.includes("ATRIBUID")){
+      atribuida += 1;
+      if(prefixo){
+        prefixoMap[prefixo] = (prefixoMap[prefixo] || 0) + 1;
+      }
+    }
     else if(status.includes("PREPAR"))    preparacao  += 1;
     else if(status.includes("DESLOC"))    deslocando  += 1;
     else if(status.includes("TRABALH"))   trabalhando += 1;
@@ -626,7 +673,7 @@ function processData(rows){
       numero: (row[2] || "").toString().trim(),   // coluna C
       vencimento: venc,
       bairro: (row[4] || "").toString().trim(),    // coluna E
-      prefixo: (row[7] || "").toString().trim(),   // coluna H
+      prefixo: prefixo,                            // coluna H
       situacao: (row[COL_STATUS] || "").toString().trim()
     });
   });
@@ -634,6 +681,7 @@ function processData(rows){
   window.__listaServicos = listaCompleta;
   renderCards({ total, atribuida, preparacao, deslocando, trabalhando });
   renderVencimento(vencimentoMap);
+  renderPrefixos(prefixoMap);
 
   document.getElementById("status").textContent =
     "Dados atualizados em " + new Date().toLocaleString("pt-BR");
@@ -655,6 +703,31 @@ function renderCards(d){
   document.getElementById("wa-deslocando").textContent = Math.round(d.deslocando);
   document.getElementById("wa-trabalhando").textContent = Math.round(d.trabalhando);
   document.getElementById("wa-data").textContent = "Atualizado em " + new Date().toLocaleString("pt-BR");
+}
+
+function renderPrefixos(map){
+  const grid = document.getElementById("prefixo-grid");
+  const section = document.getElementById("prefixo-section");
+  grid.innerHTML = "";
+
+  const entries = Object.entries(map).sort((a,b) => b[1] - a[1]);
+
+  if(entries.length === 0){
+    section.style.display = "none";
+    return;
+  }
+
+  entries.forEach(([prefixo, qtd]) => {
+    const card = document.createElement("div");
+    card.className = "prefixo-card";
+    card.onclick = () => abrirModalLista(prefixo);
+    card.innerHTML = `
+      <div class="pf-nome">${prefixo}</div>
+      <div class="pf-qtd">${qtd}</div>`;
+    grid.appendChild(card);
+  });
+
+  section.style.display = "block";
 }
 
 function renderVencimento(map){
@@ -779,9 +852,10 @@ function renderListaServicos(filtroTexto){
   });
 }
 
-function abrirModalLista(){
-  document.getElementById("modal-search").value = "";
-  renderListaServicos("");
+function abrirModalLista(filtroInicial){
+  const termo = filtroInicial || "";
+  document.getElementById("modal-search").value = termo;
+  renderListaServicos(termo);
   document.getElementById("modal-lista").classList.add("aberto");
   document.body.style.overflow = "hidden";
 }
@@ -801,27 +875,15 @@ function filtrarListaServicos(){
 // ============================================================
 function baixarComoImagem(){
   const btn = document.getElementById("btn-download");
-  const area = document.getElementById("whatsapp-card");
+  const area = document.getElementById("capture-area");
   btn.disabled = true;
   btn.textContent = "Gerando imagem...";
 
-  // Move o card temporariamente para a tela (html2canvas não captura bem elementos fora da viewport)
-  const originalTop = area.style.top;
-  const originalLeft = area.style.left;
-  area.style.top = "0px";
-  area.style.left = "0px";
-  area.style.zIndex = "-1";
-
   html2canvas(area, {
-    backgroundColor: "#000420",
+    backgroundColor: "#000725",
     scale: 2,
-    useCORS: true,
-    width: 1080,
-    windowWidth: 1080
+    useCORS: true
   }).then(canvas => {
-    area.style.top = originalTop;
-    area.style.left = originalLeft;
-
     const link = document.createElement("a");
     const dataHoje = new Date().toLocaleDateString("pt-BR").replace(/\//g,"-");
     link.download = `romaria-2026-acompanhamento-${dataHoje}.png`;
@@ -830,8 +892,6 @@ function baixarComoImagem(){
     btn.disabled = false;
     btn.textContent = "⬇️ Baixar como Imagem";
   }).catch(err => {
-    area.style.top = originalTop;
-    area.style.left = originalLeft;
     console.error(err);
     btn.disabled = false;
     btn.textContent = "⬇️ Baixar como Imagem";
