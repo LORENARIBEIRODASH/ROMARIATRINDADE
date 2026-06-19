@@ -237,13 +237,17 @@ const SHEET_ID = "1R5kdLG5hOjZ6Gnxo6ZeYQZLyaY-jRb2laSXwIeXtYWE";
 const GID = "0";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
-// Colunas (0-indexed): A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9
+// Colunas (0-indexed): A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12
 const COL_VENCIMENTO = 3; // coluna D
 const COL_DESC       = 5; // coluna F (descrição do item, ex: "LIGAÇÃO PROVISORIA")
 const COL_STATUS     = 9; // coluna J
+const COL_REGIAO     = 12; // coluna M (região/equipe)
 
 // Só conta a linha se a descrição da coluna F contiver este texto
 const DESC_FILTRO = "LIGACAO PROVISORIA";
+
+// Só conta a linha se a coluna M for exatamente este texto
+const REGIAO_FILTRO = "50 ME-TRINDADE/CAMP/ST BARB";
 
 // Linha onde os dados começam (0-indexed). Ajuste se houver mais linhas de cabeçalho.
 const HEADER_ROWS = 1;
@@ -280,6 +284,9 @@ function processData(rows){
     const desc = normalize(row[COL_DESC]);
     if(desc !== DESC_FILTRO) return; // só conta linha cujo Subtipo é EXATAMENTE "LIGAÇÃO PROVISÓRIA"
     if(desc.includes("DESLIGAMENTO")) return; // nunca conta "Desligamento Ligação Provisória"
+
+    const regiao = normalize(row[COL_REGIAO]);
+    if(regiao !== normalize(REGIAO_FILTRO)) return; // só conta se coluna M for a região correta
 
     const status = normalize(row[COL_STATUS]);
     const venc = (row[COL_VENCIMENTO] || "").toString().trim();
