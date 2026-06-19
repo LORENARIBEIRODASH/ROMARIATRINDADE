@@ -311,6 +311,103 @@
   .status-pill.deslocando{ background:rgba(127,209,255,0.2); color:#7fd1ff; }
   .status-pill.trabalhando{ background:rgba(46,204,113,0.2); color:var(--good); }
   .status-pill.outro{ background:rgba(255,255,255,0.1); color:var(--text-soft); }
+
+  /* ===== Card vertical para WhatsApp (fora da tela, só usado na captura) ===== */
+  #whatsapp-card{
+    position:fixed;
+    top:-99999px;
+    left:-99999px;
+    width:1080px;
+    padding:70px 70px 50px 70px;
+    background:radial-gradient(circle at top, #000d55 0%, #000420 75%);
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    color:#fff;
+  }
+  #whatsapp-card .wa-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 26px;
+    border-radius:999px;
+    background:rgba(59,107,255,0.15);
+    border:1px solid rgba(59,107,255,0.4);
+    color:#aab6ff;
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  #whatsapp-card .wa-title{
+    font-size:54px;
+    font-weight:800;
+    margin-top:28px;
+    line-height:1.15;
+    background:linear-gradient(90deg,#ffffff,#9db4ff);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  #whatsapp-card .wa-sub{
+    font-size:26px;
+    color:#aab6ff;
+    margin-top:10px;
+    font-weight:600;
+  }
+  #whatsapp-card .wa-total{
+    margin-top:50px;
+    background:linear-gradient(145deg,#000f60,#000936);
+    border:1px solid #1a2f8f;
+    border-radius:28px;
+    padding:46px;
+    text-align:center;
+  }
+  #whatsapp-card .wa-total .lbl{
+    font-size:26px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:#aab6ff;
+    font-weight:700;
+  }
+  #whatsapp-card .wa-total .num{
+    font-size:140px;
+    font-weight:800;
+    line-height:1;
+    margin-top:14px;
+  }
+  #whatsapp-card .wa-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:24px;
+    margin-top:30px;
+  }
+  #whatsapp-card .wa-mini{
+    background:linear-gradient(145deg,#000f60,#000936);
+    border:1px solid #1a2f8f;
+    border-radius:22px;
+    padding:30px;
+  }
+  #whatsapp-card .wa-mini .lbl{
+    font-size:22px;
+    color:#aab6ff;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  #whatsapp-card .wa-mini .num{
+    font-size:64px;
+    font-weight:800;
+    margin-top:8px;
+  }
+  #whatsapp-card .wa-mini.atribuida .num{ color:#3b6bff; }
+  #whatsapp-card .wa-mini.preparacao .num{ color:#f5c542; }
+  #whatsapp-card .wa-mini.deslocando .num{ color:#7fd1ff; }
+  #whatsapp-card .wa-mini.trabalhando .num{ color:#2ecc71; }
+  #whatsapp-card .wa-footer{
+    margin-top:46px;
+    text-align:center;
+    color:#7d8fd9;
+    font-size:22px;
+  }
 </style>
 </head>
 <body>
@@ -385,6 +482,38 @@
 
 </div><!-- /capture-area -->
 
+<div id="whatsapp-card">
+  <span class="wa-eyebrow">● Romaria do Divino Pai Eterno 2026</span>
+  <div class="wa-title">ACOMPANHAMENTO<br>STC METROPOLITANA</div>
+  <div class="wa-sub" id="wa-data">Atualizado em --/--/----, --:--</div>
+
+  <div class="wa-total">
+    <div class="lbl">Total de Ligações Provisórias</div>
+    <div class="num" id="wa-total">0</div>
+  </div>
+
+  <div class="wa-grid">
+    <div class="wa-mini atribuida">
+      <div class="lbl">Atribuída</div>
+      <div class="num" id="wa-atribuida">0</div>
+    </div>
+    <div class="wa-mini preparacao">
+      <div class="lbl">Preparação</div>
+      <div class="num" id="wa-preparacao">0</div>
+    </div>
+    <div class="wa-mini deslocando">
+      <div class="lbl">Deslocando</div>
+      <div class="num" id="wa-deslocando">0</div>
+    </div>
+    <div class="wa-mini trabalhando">
+      <div class="lbl">Trabalhando</div>
+      <div class="num" id="wa-trabalhando">0</div>
+    </div>
+  </div>
+
+  <div class="wa-footer">STC / Equatorial Energia</div>
+</div>
+
 <div class="download-wrap">
   <button id="btn-download" onclick="baixarComoImagem()">⬇️ Baixar como Imagem</button>
 </div>
@@ -399,7 +528,7 @@
     <div class="modal-table-wrap">
       <table id="lista-servicos-table">
         <thead>
-          <tr><th>Número</th><th>Vencimento</th><th>Bairro</th><th>Situação</th></tr>
+          <tr><th>Número</th><th>Vencimento</th><th>Bairro</th><th>Prefixo</th><th>Situação</th></tr>
         </thead>
         <tbody id="lista-servicos-body"></tbody>
       </table>
@@ -497,6 +626,7 @@ function processData(rows){
       numero: (row[2] || "").toString().trim(),   // coluna C
       vencimento: venc,
       bairro: (row[4] || "").toString().trim(),    // coluna E
+      prefixo: (row[7] || "").toString().trim(),   // coluna H
       situacao: (row[COL_STATUS] || "").toString().trim()
     });
   });
@@ -517,6 +647,14 @@ function renderCards(d){
   document.getElementById("v-preparacao").textContent = Math.round(d.preparacao);
   document.getElementById("v-deslocando").textContent = Math.round(d.deslocando);
   document.getElementById("v-trabalhando").textContent = Math.round(d.trabalhando);
+
+  // Card oculto usado para gerar a imagem do WhatsApp
+  document.getElementById("wa-total").textContent = Math.round(d.total);
+  document.getElementById("wa-atribuida").textContent = Math.round(d.atribuida);
+  document.getElementById("wa-preparacao").textContent = Math.round(d.preparacao);
+  document.getElementById("wa-deslocando").textContent = Math.round(d.deslocando);
+  document.getElementById("wa-trabalhando").textContent = Math.round(d.trabalhando);
+  document.getElementById("wa-data").textContent = "Atualizado em " + new Date().toLocaleString("pt-BR");
 }
 
 function renderVencimento(map){
@@ -618,12 +756,13 @@ function renderListaServicos(filtroTexto){
     if(!termo) return true;
     return normalize(item.numero).includes(termo) ||
            normalize(item.bairro).includes(termo) ||
+           normalize(item.prefixo).includes(termo) ||
            normalize(item.situacao).includes(termo) ||
            normalize(item.vencimento).includes(termo);
   });
 
   if(filtrada.length === 0){
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-soft);padding:24px;">Nenhum resultado encontrado.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-soft);padding:24px;">Nenhum resultado encontrado.</td></tr>`;
     return;
   }
 
@@ -634,6 +773,7 @@ function renderListaServicos(filtroTexto){
       <td>${item.numero || "—"}</td>
       <td>${item.vencimento || "—"}</td>
       <td>${item.bairro || "—"}</td>
+      <td>${item.prefixo || "—"}</td>
       <td><span class="status-pill ${cls}">${item.situacao || "—"}</span></td>`;
     tbody.appendChild(tr);
   });
@@ -661,15 +801,27 @@ function filtrarListaServicos(){
 // ============================================================
 function baixarComoImagem(){
   const btn = document.getElementById("btn-download");
-  const area = document.getElementById("capture-area");
+  const area = document.getElementById("whatsapp-card");
   btn.disabled = true;
   btn.textContent = "Gerando imagem...";
 
+  // Move o card temporariamente para a tela (html2canvas não captura bem elementos fora da viewport)
+  const originalTop = area.style.top;
+  const originalLeft = area.style.left;
+  area.style.top = "0px";
+  area.style.left = "0px";
+  area.style.zIndex = "-1";
+
   html2canvas(area, {
-    backgroundColor: "#000725",
+    backgroundColor: "#000420",
     scale: 2,
-    useCORS: true
+    useCORS: true,
+    width: 1080,
+    windowWidth: 1080
   }).then(canvas => {
+    area.style.top = originalTop;
+    area.style.left = originalLeft;
+
     const link = document.createElement("a");
     const dataHoje = new Date().toLocaleDateString("pt-BR").replace(/\//g,"-");
     link.download = `romaria-2026-acompanhamento-${dataHoje}.png`;
@@ -678,6 +830,8 @@ function baixarComoImagem(){
     btn.disabled = false;
     btn.textContent = "⬇️ Baixar como Imagem";
   }).catch(err => {
+    area.style.top = originalTop;
+    area.style.left = originalLeft;
     console.error(err);
     btn.disabled = false;
     btn.textContent = "⬇️ Baixar como Imagem";
