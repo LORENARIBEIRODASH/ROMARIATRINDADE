@@ -279,6 +279,7 @@ function processData(rows){
 
     const desc = normalize(row[COL_DESC]);
     if(desc !== DESC_FILTRO) return; // só conta linha cujo Subtipo é EXATAMENTE "LIGAÇÃO PROVISÓRIA"
+    if(desc.includes("DESLIGAMENTO")) return; // nunca conta "Desligamento Ligação Provisória"
 
     const status = normalize(row[COL_STATUS]);
     const venc = (row[COL_VENCIMENTO] || "").toString().trim();
