@@ -278,7 +278,7 @@ function processData(rows){
     if(!row || row.length === 0) return;
 
     const desc = normalize(row[COL_DESC]);
-    if(!desc.includes(DESC_FILTRO)) return; // só conta "LIGAÇÃO PROVISORIA"
+    if(desc !== DESC_FILTRO) return; // só conta linha cujo Subtipo é EXATAMENTE "LIGAÇÃO PROVISÓRIA"
 
     const status = normalize(row[COL_STATUS]);
     const venc = (row[COL_VENCIMENTO] || "").toString().trim();
