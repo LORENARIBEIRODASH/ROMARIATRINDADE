@@ -41,9 +41,33 @@
     color:transparent;
   }
   header p{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-top:14px;
+    padding:8px 20px;
+    border-radius:999px;
+    background:rgba(59,107,255,0.12);
+    border:1px solid rgba(59,107,255,0.35);
     color:var(--text-soft);
-    margin-top:6px;
-    font-size:14px;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+  }
+  header p .dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--blue-accent);
+    box-shadow:0 0 8px var(--blue-accent);
+  }
+  header .underline{
+    width:80px;
+    height:3px;
+    margin:18px auto 0 auto;
+    border-radius:3px;
+    background:linear-gradient(90deg,transparent,var(--blue-accent),transparent);
   }
   #status{
     text-align:center;
@@ -174,7 +198,8 @@
 
 <header>
   <h1>ACOMPANHAMENTO STC METROPOLITANA</h1>
-  <p>ROMARIA DO DIVINO PAI ETERNO 2026 — LIGAÇÕES PROVISÓRIAS</p>
+  <p><span class="dot"></span>Romaria do Divino Pai Eterno 2026 <span class="dot"></span> Ligações Provisórias</p>
+  <div class="underline"></div>
 </header>
 
 <div id="status">Carregando dados da planilha...</div>
