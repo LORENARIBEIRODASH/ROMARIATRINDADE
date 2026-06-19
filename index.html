@@ -160,6 +160,20 @@
     border-bottom:1px solid var(--card-border);
   }
   tr:nth-child(even){background:rgba(255,255,255,0.03);}
+  tr.ativo-agora{
+    background:rgba(125,180,255,0.18) !important;
+    box-shadow:inset 3px 0 0 #7fc4ff;
+  }
+  tr.ativo-agora td:first-child{
+    color:#7fc4ff;
+    font-weight:700;
+  }
+  tr.ativo-agora td:first-child::after{
+    content:" ● em turno";
+    font-size:11px;
+    color:#7fc4ff;
+    font-weight:600;
+  }
   td.num{font-weight:700;color:var(--blue-accent);}
   .bar-row{display:flex;align-items:center;gap:10px;}
   .bar-track{
@@ -240,6 +254,24 @@
 </section>
 
 <div id="error" class="error-box" style="display:none;"></div>
+
+<section>
+  <h2>Apoio</h2>
+  <div class="panel">
+    <table id="apoio-table">
+      <thead>
+        <tr><th>Apoio</th><th>Horário</th><th>Telefone</th></tr>
+      </thead>
+      <tbody id="apoio-body">
+        <tr data-start="07:00" data-end="16:00"><td>Rafael Pereira</td><td>07:00 às 16:00</td><td>99257-1544</td></tr>
+        <tr data-start="13:00" data-end="22:00"><td>Luis Guimarães</td><td>13:00 às 22:00</td><td>99506-0829</td></tr>
+        <tr data-start="10:00" data-end="19:00"><td>Ivan Soares</td><td>10:00 às 19:00</td><td>99996-9830</td></tr>
+        <tr data-start="07:00" data-end="18:00"><td>Gabrielly Amora</td><td>07:00 às 18:00</td><td>99168-7641</td></tr>
+        <tr data-start="13:00" data-end="22:00"><td>Tatiane da Costa</td><td>13:00 às 22:00</td><td>99257-2035</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
 <footer>Atualizado automaticamente a partir do Google Sheets · STC / Equatorial Energia</footer>
 
@@ -389,6 +421,38 @@ function showError(err){
 loadData();
 // Atualiza automaticamente a cada 5 minutos
 setInterval(loadData, 5 * 60 * 1000);
+
+// ============================================================
+// Destaca em verde quem está de apoio no horário atual
+// ============================================================
+function highlightApoioAtivo(){
+  const now = new Date();
+  const minutosAgora = now.getHours() * 60 + now.getMinutes();
+
+  document.querySelectorAll("#apoio-body tr").forEach(tr => {
+    const start = tr.getAttribute("data-start");
+    const end = tr.getAttribute("data-end");
+    if(!start || !end){ tr.classList.remove("ativo-agora"); return; }
+
+    const [sh, sm] = start.split(":").map(Number);
+    const [eh, em] = end.split(":").map(Number);
+    const minutosInicio = sh * 60 + sm;
+    let minutosFim = eh * 60 + em;
+
+    let ativo;
+    if(minutosFim <= minutosInicio){
+      // turno que vira a noite (ex: 22:00 às 06:00)
+      ativo = minutosAgora >= minutosInicio || minutosAgora < minutosFim;
+    } else {
+      ativo = minutosAgora >= minutosInicio && minutosAgora < minutosFim;
+    }
+
+    tr.classList.toggle("ativo-agora", ativo);
+  });
+}
+
+highlightApoioAtivo();
+setInterval(highlightApoioAtivo, 60 * 1000); // reavalia a cada minuto
 </script>
 
 </body>
