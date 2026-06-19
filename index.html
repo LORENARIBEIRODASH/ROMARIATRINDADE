@@ -229,6 +229,88 @@
   }
   #btn-download:active{ transform:translateY(0); }
   #btn-download:disabled{ opacity:0.6; cursor:wait; }
+
+  .card.total:hover{
+    box-shadow:0 12px 32px rgba(59,107,255,0.4);
+    border-color:var(--blue-accent);
+  }
+
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,5,30,0.75);
+    backdrop-filter:blur(4px);
+    z-index:1000;
+    padding:24px;
+    overflow-y:auto;
+  }
+  .modal-overlay.aberto{ display:flex; align-items:flex-start; justify-content:center; }
+  .modal-box{
+    background:linear-gradient(160deg,var(--card-bg),#000936);
+    border:1px solid var(--card-border);
+    border-radius:18px;
+    width:100%;
+    max-width:900px;
+    margin-top:4vh;
+    padding:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .modal-header h3{
+    font-size:18px;
+    color:#fff;
+  }
+  .modal-close{
+    background:rgba(255,255,255,0.08);
+    border:1px solid var(--card-border);
+    color:#fff;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:16px;
+    line-height:1;
+  }
+  .modal-search{
+    width:100%;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid var(--card-border);
+    background:rgba(255,255,255,0.05);
+    color:#fff;
+    font-size:14px;
+    margin-bottom:16px;
+  }
+  .modal-search::placeholder{ color:var(--text-soft); }
+  .modal-table-wrap{
+    max-height:60vh;
+    overflow-y:auto;
+    border-radius:10px;
+  }
+  #lista-servicos-table th{
+    position:sticky;
+    top:0;
+    background:#000c4d;
+  }
+  .status-pill{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  .status-pill.atribuida{ background:rgba(59,107,255,0.2); color:var(--blue-accent); }
+  .status-pill.preparacao{ background:rgba(245,197,66,0.2); color:var(--warn); }
+  .status-pill.deslocando{ background:rgba(127,209,255,0.2); color:#7fd1ff; }
+  .status-pill.trabalhando{ background:rgba(46,204,113,0.2); color:var(--good); }
+  .status-pill.outro{ background:rgba(255,255,255,0.1); color:var(--text-soft); }
 </style>
 </head>
 <body>
@@ -244,8 +326,8 @@
 <div id="status">Carregando dados da planilha...</div>
 
 <div class="grid" id="cards" style="display:none;">
-  <div class="card total">
-    <div class="label">Total de Ligações Provisórias</div>
+  <div class="card total" id="card-total" onclick="abrirModalLista()" style="cursor:pointer;">
+    <div class="label">Total de Ligações Provisórias <span style="opacity:0.6;font-size:11px;">(clique para ver lista)</span></div>
     <div class="value" id="v-total">0</div>
   </div>
   <div class="card atribuida">
@@ -265,18 +347,6 @@
     <div class="value" id="v-trabalhando">0</div>
   </div>
 </div>
-
-<section id="vencimento-section" style="display:none;">
-  <h2>Vencimento por Dia</h2>
-  <div class="panel">
-    <table id="venc-table">
-      <thead>
-        <tr><th>Data de Vencimento</th><th>Quantidade</th><th style="width:40%;">Proporção</th></tr>
-      </thead>
-      <tbody id="venc-body"></tbody>
-    </table>
-  </div>
-</section>
 
 <div id="error" class="error-box" style="display:none;"></div>
 
@@ -298,12 +368,43 @@
   </div>
 </section>
 
+<section id="vencimento-section" style="display:none;">
+  <h2>Vencimento por Dia</h2>
+  <div class="panel">
+    <table id="venc-table">
+      <thead>
+        <tr><th>Data de Vencimento</th><th>Quantidade</th><th style="width:40%;">Proporção</th></tr>
+      </thead>
+      <tbody id="venc-body"></tbody>
+    </table>
+  </div>
+</section>
+
+
 <footer>Atualizado automaticamente a partir do Google Sheets · STC / Equatorial Energia</footer>
 
 </div><!-- /capture-area -->
 
 <div class="download-wrap">
   <button id="btn-download" onclick="baixarComoImagem()">⬇️ Baixar como Imagem</button>
+</div>
+
+<div class="modal-overlay" id="modal-lista" onclick="if(event.target===this) fecharModalLista()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Lista completa de Ligações Provisórias</h3>
+      <button class="modal-close" onclick="fecharModalLista()">✕</button>
+    </div>
+    <input type="text" class="modal-search" id="modal-search" placeholder="Buscar por número, bairro, situação..." oninput="filtrarListaServicos()">
+    <div class="modal-table-wrap">
+      <table id="lista-servicos-table">
+        <thead>
+          <tr><th>Número</th><th>Vencimento</th><th>Bairro</th><th>Situação</th></tr>
+        </thead>
+        <tbody id="lista-servicos-body"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -366,6 +467,7 @@ function processData(rows){
   let total = 0;
   let atribuida = 0, preparacao = 0, deslocando = 0, trabalhando = 0;
   const vencimentoMap = {};
+  const listaCompleta = [];
 
   rows.forEach(row => {
     if(!row || row.length === 0) return;
@@ -390,8 +492,16 @@ function processData(rows){
     if(venc){
       vencimentoMap[venc] = (vencimentoMap[venc] || 0) + 1;
     }
+
+    listaCompleta.push({
+      numero: (row[2] || "").toString().trim(),   // coluna C
+      vencimento: venc,
+      bairro: (row[4] || "").toString().trim(),    // coluna E
+      situacao: (row[COL_STATUS] || "").toString().trim()
+    });
   });
 
+  window.__listaServicos = listaCompleta;
   renderCards({ total, atribuida, preparacao, deslocando, trabalhando });
   renderVencimento(vencimentoMap);
 
@@ -485,6 +595,66 @@ function highlightApoioAtivo(){
 
 highlightApoioAtivo();
 setInterval(highlightApoioAtivo, 60 * 1000); // reavalia a cada minuto
+
+// ============================================================
+// Modal com a lista completa de Ligações Provisórias
+// ============================================================
+function statusClasse(situacao){
+  const s = normalize(situacao);
+  if(s.includes("ATRIBUID")) return "atribuida";
+  if(s.includes("PREPAR"))   return "preparacao";
+  if(s.includes("DESLOC"))   return "deslocando";
+  if(s.includes("TRABALH"))  return "trabalhando";
+  return "outro";
+}
+
+function renderListaServicos(filtroTexto){
+  const lista = window.__listaServicos || [];
+  const termo = normalize(filtroTexto || "");
+  const tbody = document.getElementById("lista-servicos-body");
+  tbody.innerHTML = "";
+
+  const filtrada = lista.filter(item => {
+    if(!termo) return true;
+    return normalize(item.numero).includes(termo) ||
+           normalize(item.bairro).includes(termo) ||
+           normalize(item.situacao).includes(termo) ||
+           normalize(item.vencimento).includes(termo);
+  });
+
+  if(filtrada.length === 0){
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-soft);padding:24px;">Nenhum resultado encontrado.</td></tr>`;
+    return;
+  }
+
+  filtrada.forEach(item => {
+    const cls = statusClasse(item.situacao);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.numero || "—"}</td>
+      <td>${item.vencimento || "—"}</td>
+      <td>${item.bairro || "—"}</td>
+      <td><span class="status-pill ${cls}">${item.situacao || "—"}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function abrirModalLista(){
+  document.getElementById("modal-search").value = "";
+  renderListaServicos("");
+  document.getElementById("modal-lista").classList.add("aberto");
+  document.body.style.overflow = "hidden";
+}
+
+function fecharModalLista(){
+  document.getElementById("modal-lista").classList.remove("aberto");
+  document.body.style.overflow = "";
+}
+
+function filtrarListaServicos(){
+  const termo = document.getElementById("modal-search").value;
+  renderListaServicos(termo);
+}
 
 // ============================================================
 // Baixa o painel inteiro como imagem PNG (ideal pra mandar no WhatsApp)
